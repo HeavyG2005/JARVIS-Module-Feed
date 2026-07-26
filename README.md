@@ -7,6 +7,13 @@ Dies ist der öffentliche Auslieferungspunkt der
 Alles hier wird von deren Publish-Workflow erzeugt; Änderungen von Hand werden beim
 nächsten Lauf überschrieben.
 
+## Stabile URLs
+
+- Feed: `https://heavyg2005.github.io/JARVIS-Module-Feed/index.json`
+- Public Key: `https://heavyg2005.github.io/JARVIS-Module-Feed/keys/registry-public.ed25519`
+
+Diese URLs sind der Bezugspunkt für den JCC-Hub. Pages liefert vom Branch `main`.
+
 ## Inhalt
 
 | Pfad | Was |
@@ -25,7 +32,7 @@ Von Hand prüfbar mit dem Tooling der Registry:
 
 ```bash
 pip install -e ./tools/publish          # im Registry-Repo
-curl -sSLO https://raw.githubusercontent.com/HeavyG2005/JARVIS-Module-Feed/master/index.json
+curl -sSLO https://heavyg2005.github.io/JARVIS-Module-Feed/index.json
 jarvis-registry verify --index index.json --public-key keys/registry-public.ed25519
 ```
 
