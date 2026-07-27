@@ -1,0 +1,91 @@
+name: CI
+
+# Prueft eingereichte Module. Seit Registry#10 ist dieses oeffentliche Repo der
+# Einreichungsweg: gegen ein privates Repository koennen Externe keine PRs oeffnen, und
+# eine Einreichung IST ein PR.
+#
+# Das Tooling kommt als Rad-Datei aus einem Release DIESES Repos, nicht aus dem PR. Zwei
+# Gruende: der Quellcode liegt im privaten Registry-Repo, und ein Pruefer, der mit dem Code
+# laeuft, den er pruefen soll, prueft nichts.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  # Bewusst festgenagelt statt "neuestes Release": so kann niemand die Pruefung dadurch
+  # veraendern, dass er ein neueres Tooling-Release anlegt. Neues Tooling heisst: Version in
+  # tools/publish/pyproject.toml erhoehen und diese Zeile mitziehen.
+  TOOLING_WHEEL: https://github.com/HeavyG2005/JARVIS-Module-Feed/releases/download/tooling-v0.1.0/jarvis_registry-0.1.0-py3-none-any.whl
+
+permissions:
+  contents: read
+
+jobs:
+  submission-scope:
+    # Trust-Grenze (Vertrag §3): Was hier gemergt wird, signiert die Registry spaeter mit
+    # ihrem Schluessel — ein Modul, das im Manifest `trust: trusted` deklariert, wird dadurch
+    # im Hub tatsaechlich Trusted. Der PR-Review ist dieses Gate.
+    #
+    # Ein Einreichungs-PR darf deshalb ausschliesslich submissions/ anfassen. Aendert er
+    # nebenbei die CI, den Feed oder den Public Key, faellt das im Diff einer harmlos
+    # aussehenden JSON-Datei nicht auf — hier faellt es auf.
+    name: submission-scope
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Tooling aus dem Release holen (nicht aus dem PR)
+        run: pip install "${TOOLING_WHEEL}"
+      - name: Geaenderte Pfade einordnen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Aus der API, nicht aus dem Checkout: die Dateiliste soll nicht aus derselben
+          # Quelle stammen wie das, was geprueft wird.
+          gh api --paginate \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            --jq '.[].filename' > changed.txt
+          echo "Geaenderte Dateien in diesem PR:"
+          sed 's/^/  /' changed.txt
+          jarvis-registry scope --changed-files changed.txt
+
+  validate-submissions:
+    # Laedt jedes eingereichte Paket, prueft sha256 gegen die Einreichung und das Manifest
+    # gegen den Vertrag. Ohne Secrets — laeuft damit auch fuer Fork-PRs Dritter.
+    name: validate-submissions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Tooling aus dem Release holen
+        run: pip install "${TOOLING_WHEEL}"
+      - name: Einreichungen pruefen
+        run: |
+          set -euo pipefail
+          # index.json liegt hier daneben und ist das Register des bereits Veroeffentlichten:
+          # ohne es erkennt validate weder Duplikate noch eine nachtraeglich geaenderte
+          # sha256 einer schon publizierten Version.
+          jarvis-registry validate --submissions submissions --index index.json
+
+  validate-json:
+    name: validate-json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JSON wohlgeformt?
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' f; do
+            echo "checking $f"
+            jq empty "$f"
+          done < <(find . -path ./.git -prune -o -name '*.json' -print0)
