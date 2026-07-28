@@ -17,7 +17,7 @@ env:
   # Bewusst festgenagelt statt "neuestes Release": so kann niemand die Pruefung dadurch
   # veraendern, dass er ein neueres Tooling-Release anlegt. Neues Tooling heisst: Version in
   # tools/publish/pyproject.toml erhoehen und diese Zeile mitziehen.
-  TOOLING_WHEEL: https://github.com/HeavyG2005/JARVIS-Module-Feed/releases/download/tooling-v0.1.0/jarvis_registry-0.1.0-py3-none-any.whl
+  TOOLING_WHEEL: https://github.com/HeavyG2005/JARVIS-Module-Feed/releases/download/tooling-v0.2.0/jarvis_registry-0.2.0-py3-none-any.whl
 
 permissions:
   contents: read
