@@ -1,0 +1,8 @@
+{
+  "id": "jarvis.calendar",
+  "version": "0.2.1",
+  "sourceUrl": "https://github.com/HeavyG2005/JARVIS-Module-Releases/releases/download/jarvis.calendar-0.2.1/jarvis.calendar-0.2.1.zip",
+  "sha256": "a3a13476989d3e02135286c7aa214b40fb3d083fd17c8136d978c507bc7eee75",
+  "yanked": false,
+  "summary": "Termine aus dem Google-Kalender im HUD, mit Anlegen, Aendern und Loeschen."
+}
