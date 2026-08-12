@@ -1,0 +1,8 @@
+{
+  "id": "jarvis.coach",
+  "version": "0.2.0",
+  "sourceUrl": "https://github.com/HeavyG2005/JARVIS-Module-Releases/releases/download/jarvis.coach-0.2.0/jarvis.coach-0.2.0.zip",
+  "sha256": "1d22b9cd400de2b58b8e97c7c1192f464568d3ee2f93b2aca7e8ec19faa92013",
+  "yanked": false,
+  "summary": "Sammelt Körperwerte aus Home Assistant in ein eigenes Langzeitarchiv und zeigt ehrlich, was ankommt."
+}
