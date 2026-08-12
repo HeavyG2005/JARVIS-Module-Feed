@@ -1,0 +1,8 @@
+{
+  "id": "jarvis.coach",
+  "version": "0.3.0",
+  "sourceUrl": "https://github.com/HeavyG2005/JARVIS-Module-Releases/releases/download/jarvis.coach-0.3.0/jarvis.coach-0.3.0.zip",
+  "sha256": "fb4e073913eb599e34b3dd375dfd29df4d5df7cccaed1d5538608c68e3c123e0",
+  "yanked": false,
+  "summary": "Fuehrt Ziele und Vorsaetze, urteilt selbst darueber und sammelt Körperwerte aus Home Assistant."
+}
