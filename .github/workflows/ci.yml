@@ -7,6 +7,17 @@ name: CI
 # Das Tooling kommt als Rad-Datei aus einem Release DIESES Repos, nicht aus dem PR. Zwei
 # Gruende: der Quellcode liegt im privaten Registry-Repo, und ein Pruefer, der mit dem Code
 # laeuft, den er pruefen soll, prueft nichts.
+#
+# Runner: self-hosted (Proxmox CT 653), wie in allen Modul-Repos. Am 06.08. fielen die
+# Pruefungen hier aus, weil GitHubs Runner-Flotte gestoert war ("Failed to resolve action
+# download info") — an einer Einreichung lag das nicht.
+#
+# ACHTUNG, dieses Repo ist OEFFENTLICH und der Einreichungsweg fuer Fremde: hier laeuft
+# fremder PR-Inhalt auf einer Maschine im eigenen Netz. Der Runner ist nicht ephemer, und
+# `submission-scope` bekommt ein GITHUB_TOKEN. Was das haelt, ist die Freigabeschranke in den
+# Repo-Einstellungen: Fork-PR-Approval steht auf `all_external_contributors`, nicht auf
+# `first_time_contributors` — sonst laeuft, wer einmal gemergt wurde, danach ungefragt.
+# Wer die Schranke lockert, muss diesen Runner vorher entfernen.
 
 on:
   pull_request:
@@ -33,7 +44,7 @@ jobs:
     # aussehenden JSON-Datei nicht auf — hier faellt es auf.
     name: submission-scope
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
       pull-requests: read
@@ -61,7 +72,7 @@ jobs:
     # Laedt jedes eingereichte Paket, prueft sha256 gegen die Einreichung und das Manifest
     # gegen den Vertrag. Ohne Secrets — laeuft damit auch fuer Fork-PRs Dritter.
     name: validate-submissions
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -79,7 +90,7 @@ jobs:
 
   validate-json:
     name: validate-json
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - name: JSON wohlgeformt?
