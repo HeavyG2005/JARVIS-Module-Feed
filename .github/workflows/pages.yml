@@ -1,0 +1,74 @@
+name: Pages
+
+# Liefert den Feed aus. Ersetzt den eingebauten Legacy-Build von GitHub Pages.
+#
+# Warum nicht der eingebaute: er ist am 06.08. dreimal hintereinander gescheitert
+# ("Page build failed." — das ist die vollstaendige Fehlermeldung, ein Log gibt es nicht), und
+# waehrenddessen stand unter der Feed-URL der Stand von 12:19. Der Hub sah deshalb neu
+# eingereichte Module nicht, obwohl index.json im Repo sie fuehrte. Ein Auslieferungsweg, der
+# ohne Diagnose ausfallen kann, traegt den Feed aller Module — das ist die falsche Grundlage.
+#
+# Dieser Weg laedt die Dateien unveraendert hoch. Es gibt nichts zu bauen: das Repo enthaelt
+# JSON und zwei Markdown-Dateien, zusammen rund 30 KB.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Nicht abbrechen, sondern einreihen: ein laufender Deploy soll zu Ende gehen, sonst kann ein
+# schnell folgender Merge den Feed auf einem halben Stand stehen lassen.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Feed veroeffentlichen
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Vor dem Hochladen, nicht danach: ein kaputtes index.json waere unter der Feed-URL
+      # schlimmer als ein veraltetes — jeder Hub, der es liest, faellt darueber.
+      - name: index.json wohlgeformt und vollstaendig?
+        run: |
+          set -euo pipefail
+          jq empty index.json
+          count=$(jq '.modules | length' index.json)
+          [ "$count" -gt 0 ] || { echo "::error::index.json enthaelt keine Module."; exit 1; }
+          jq -e '.signature' index.json >/dev/null || { echo "::error::index.json hat keine Signatur."; exit 1; }
+          echo "$count Module, Signatur vorhanden."
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+      # Der Deploy meldet Erfolg, sobald er hochgeladen hat. Ob der Feed danach auch WIRKLICH
+      # ausliefert, ist eine andere Frage — und genau die war hier offen.
+      - name: Ausgelieferten Feed gegenpruefen
+        run: |
+          set -euo pipefail
+          url="${{ steps.deploy.outputs.page_url }}index.json"
+          for i in $(seq 1 10); do
+            if curl -sfL "$url" -o live.json && jq empty live.json 2>/dev/null; then
+              echo "Ausgeliefert: $(jq -r '[.modules[].id] | join(", ")' live.json)"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::$url liefert nach 150 s kein gueltiges JSON."
+          exit 1
